@@ -12,7 +12,7 @@
     <script>
         async function loadRanks() {
             try {
-                const response = await fetch('/api/rank_api');
+                const response = await fetch('/api/rank');
                 const data = await response.json();
 
                 const list = document.getElementById('rank-list');
