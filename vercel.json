@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/rank_api.py": {
+      "runtime": "python3.11"
+    }
+  }
+}
