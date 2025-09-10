@@ -11,15 +11,20 @@
 
     <script>
         async function loadRanks() {
-            const response = await fetch('/.netlify/functions/rank_api'); // adjust URL for your platform
-            const data = await response.json();
+            try {
+                const response = await fetch('/api/rank_api');
+                const data = await response.json();
 
-            const list = document.getElementById('rank-list');
-            list.innerHTML = '';
-            for (let mode in data) {
-                const li = document.createElement('li');
-                li.innerHTML = `<strong>${mode}:</strong> ${data[mode]}`;
-                list.appendChild(li);
+                const list = document.getElementById('rank-list');
+                list.innerHTML = '';
+                for (let mode in data) {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<strong>${mode}:</strong> ${data[mode]}`;
+                    list.appendChild(li);
+                }
+            } catch (err) {
+                console.error(err);
+                document.getElementById('rank-list').innerHTML = "<li>Failed to load ranks</li>";
             }
         }
 
