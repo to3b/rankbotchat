@@ -1,7 +1,7 @@
 import fetch from "node-fetch";
 
 // --- CONFIGURATION ---
-const API_TOKEN = "YOUR_BALLCHASING_API_KEY";
+const API_TOKEN = "Ay1yzdp9jAmiO5CPBUoAdSEPdFkPYG3sJCnFwf8x";
 const PLAYER_ID = "steam:76561198330826708"; // Use full Steam/Epic ID
 
 // Helper to fetch JSON from Ballchasing API
