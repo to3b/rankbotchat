@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css" />
+    <script defer src="https://pyscript.net/latest/pyscript.js"></script>
+</head>
+<body>
+    <h1>Ballchasing Ranks</h1>
+    <div id="ranks"></div>
+
+    <py-script>
+import asyncio
+from pyodide.http import pyfetch
+import json
+
+API_TOKEN = "Ay1yzdp9jAmiO5CPBUoAdSEPdFkPYG3sJCnFwf8x"
+PLAYER_ID = "steam:76561198330826708"  # full Steam/Epic ID
+
+playlists = {
+    "1v1": "ranked-duels",
+    "2v2": "ranked-doubles",
+    "3v3": "ranked-standard"
+}
+
+async def fetch_json(url):
+    response = await pyfetch(
+        url,
+        headers={"Authorization": API_TOKEN}
+    )
+    return await response.json()
+
+async def get_ranks():
+    ranks_div = Element("ranks")
+    ranks_text = ""
+    for mode, playlist in playlists.items():
+        replays_url = f"https://ballchasing.com/api/replays?player={PLAYER_ID}&count=10&playlist={playlist}"
+        replays = await fetch_json(replays_url)
+
+        if not replays:
+            ranks_text += f"{mode}: No replays found<br>"
+            continue
+
+        # Most recent replay
+        most_recent = sorted(replays, key=lambda x: x['created'], reverse=True)[0]
+        replay_url = f"https://ballchasing.com/api/replays/{most_recent['id']}"
+        replay = await fetch_json(replay_url)
+
+        # Find player data
+        player_data = None
+        for team in ["blue", "orange"]:
+            for p in replay[team]["players"]:
+                if p["id"]["id"] == PLAYER_ID.split(":")[1]:
+                    player_data = p
+                    break
+            if player_data:
+                break
+
+        rank_name = player_data.get("rank", {}).get("name", "Rank not available") if player_data else "Player not found"
+        ranks_text += f"{mode}: {rank_name}<br>"
+
+    ranks_div.write(ranks_text)
+
+asyncio.ensure_future(get_ranks())
+    </py-script>
+</body>
+</html>
