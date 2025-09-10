@@ -1,66 +1,64 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css" />
-    <script defer src="https://pyscript.net/latest/pyscript.js"></script>
+  <title>Ballchasing Ranks</title>
 </head>
 <body>
-    <h1>Ballchasing Ranks</h1>
-    <div id="ranks"></div>
+  <h1>Ballchasing Ranks</h1>
+  <div id="ranks">Loading...</div>
 
-    <py-script>
-import asyncio
-from pyodide.http import pyfetch
-import json
+  <script>
+    const API_TOKEN = "Ay1yzdp9jAmiO5CPBUoAdSEPdFkPYG3sJCnFwf8x";
+    const PLAYER_ID = "steam:76561198330826708";
 
-API_TOKEN = "Ay1yzdp9jAmiO5CPBUoAdSEPdFkPYG3sJCnFwf8x"
-PLAYER_ID = "steam:76561198330826708"  # full Steam/Epic ID
+    const playlists = {
+      "1v1": "ranked-duels",
+      "2v2": "ranked-doubles",
+      "3v3": "ranked-standard"
+    };
 
-playlists = {
-    "1v1": "ranked-duels",
-    "2v2": "ranked-doubles",
-    "3v3": "ranked-standard"
-}
+    async function fetchJSON(url) {
+      const res = await fetch(url, {
+        headers: { Authorization: API_TOKEN }
+      });
+      return res.json();
+    }
 
-async def fetch_json(url):
-    response = await pyfetch(
-        url,
-        headers={"Authorization": API_TOKEN}
-    )
-    return await response.json()
+    async function getRanks() {
+      let output = "";
 
-async def get_ranks():
-    ranks_div = Element("ranks")
-    ranks_text = ""
-    for mode, playlist in playlists.items():
-        replays_url = f"https://ballchasing.com/api/replays?player={PLAYER_ID}&count=10&playlist={playlist}"
-        replays = await fetch_json(replays_url)
+      for (const [mode, playlist] of Object.entries(playlists)) {
+        const replaysUrl = `https://ballchasing.com/api/replays?player=${PLAYER_ID}&count=10&playlist=${playlist}`;
+        const replays = await fetchJSON(replaysUrl);
 
-        if not replays:
-            ranks_text += f"{mode}: No replays found<br>"
-            continue
+        if (!replays.list || replays.list.length === 0) {
+          output += `${mode}: No replays found<br>`;
+          continue;
+        }
 
-        # Most recent replay
-        most_recent = sorted(replays, key=lambda x: x['created'], reverse=True)[0]
-        replay_url = f"https://ballchasing.com/api/replays/{most_recent['id']}"
-        replay = await fetch_json(replay_url)
+        // Most recent replay
+        const mostRecent = replays.list.sort((a, b) =>
+          new Date(b.created) - new Date(a.created)
+        )[0];
+        const replay = await fetchJSON(`https://ballchasing.com/api/replays/${mostRecent.id}`);
 
-        # Find player data
-        player_data = None
-        for team in ["blue", "orange"]:
-            for p in replay[team]["players"]:
-                if p["id"]["id"] == PLAYER_ID.split(":")[1]:
-                    player_data = p
-                    break
-            if player_data:
-                break
+        // Find the player
+        let playerData = null;
+        for (const team of ["blue", "orange"]) {
+          playerData = replay[team].players.find(
+            p => p.id.id === PLAYER_ID.split(":")[1]
+          );
+          if (playerData) break;
+        }
 
-        rank_name = player_data.get("rank", {}).get("name", "Rank not available") if player_data else "Player not found"
-        ranks_text += f"{mode}: {rank_name}<br>"
+        const rankName = playerData?.rank?.name || "Rank not available";
+        output += `${mode}: ${rankName}<br>`;
+      }
 
-    ranks_div.write(ranks_text)
+      document.getElementById("ranks").innerHTML = output;
+    }
 
-asyncio.ensure_future(get_ranks())
-    </py-script>
+    getRanks();
+  </script>
 </body>
 </html>
